@@ -17,3 +17,11 @@ executable Day2
                      , text
                      , vector
   default-language:    Haskell2010
+
+executable Day3
+  main-is:             Day3.hs
+  build-depends:       base >=4.12 && <4.13
+                     , text
+                     , vector
+                     , containers
+  default-language:    Haskell2010
