@@ -1,6 +1,5 @@
 module Main where
 
-import Data.Text (Text)
 import qualified Data.Text.IO as T
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
@@ -8,78 +7,133 @@ import Data.Vector (Vector, (!), (//))
 import qualified Data.Vector as V
 import Debug.Trace
 
-type Address = Integer
+type Address = Integer 
 type Memory = Vector Integer
 
 data Parameter = PAddr Address | PValue Integer deriving Show
 
 data Instruction = 
-    Add Parameter Parameter Parameter 
-  | Mul Parameter Parameter Parameter 
-  | Input Parameter
+    Add Parameter Parameter Address 
+  | Mul Parameter Parameter Address 
+  | Input Address
   | Output Parameter
+  | JumpIfTrue Parameter Parameter
+  | JumpIfFalse Parameter Parameter
+  | LessThan Parameter Parameter Address
+  | Equals Parameter Parameter Address
   | Stop
   | Error
   deriving (Show)
   
 main :: IO ()
 main = do 
-  input <- T.readFile "Day2_input.txt"  
-  let (Right numbers) = traverse T.decimal . T.split (== ',') $ input
-  let program = V.fromList (fst <$> numbers)
-  let result = head [100 * noun + verb | noun <- [0..99], verb <- [0..99], runProgram program noun verb == 19690720]
-  print result
+  input <- T.readFile "Day5_input.txt"  
+  let segments = T.split (== ',') input
+  case traverse (T.signed T.decimal) segments of 
+    (Right numbers) ->
+      let program = V.fromList $ fst <$> numbers
+          result = runProgram program [5] 
+      in print result
+    (Left err) -> print err
 
-runProgram :: Memory -> Integer -> Integer -> Integer
-runProgram program noun verb = 
-  let memory = program // [(1, noun), (2, verb)]
-      firstInstruction = readInstruction memory 0
-      (result, _, _) = until finished step (memory, 0, firstInstruction) 
-  in  readData result 0
+runProgram :: Memory -> [Integer] -> [Integer]
+runProgram program input  = 
+  let (_, _, output, _) = until finished step (program, input, [], 0) 
+  in output
 
-finished :: (Memory, Address, Instruction) -> Bool
-finished (_, _, Stop) = True
-finished (_, _, Error) = True
-finished _ = False
+step :: (Memory, [Integer], [Integer], Address) -> (Memory, [Integer], [Integer], Address)
+step (memory, input, output, address) =
+  let instruction = readInstruction memory address
+  in runInstruction $ trace (show instruction) instruction
+  where 
+    runInstruction :: Instruction -> (Memory, [Integer], [Integer], Address)
+    runInstruction (Add pleft pright dest) = 
+      let left = loadParam memory pleft
+          right = loadParam memory pright
+          result = left + right
+          memory' = storeData memory dest result
+      in (memory', input, output, address + 4)
+    runInstruction (Mul pleft pright dest) = 
+      let left = loadParam memory pleft
+          right = loadParam memory pright
+          result = left * right
+          memory' = storeData memory dest result
+      in (memory', input, output, address + 4)
+    runInstruction (Input dest) = 
+      let (val : input') = input
+          memory' = storeData memory dest val
+      in (memory', input', output, address + 2)
+    runInstruction (Output p) = 
+      let output' = output ++ [loadParam memory p]
+      in (memory, input, output', address + 2)
+    runInstruction (JumpIfTrue pcondition dest) = 
+      case loadParam memory pcondition of 
+        0 -> (memory, input, output, address + 3)
+        _ -> (memory, input, output, loadParam memory dest)
+    runInstruction (JumpIfFalse pcondition dest) = 
+      case loadParam memory pcondition of 
+        0 -> (memory, input, output, loadParam memory dest)
+        _ -> (memory, input, output, address + 3)
+    runInstruction (LessThan pleft pright dest) = 
+      let left = loadParam memory pleft
+          right = loadParam memory pright
+          result = if left < right then 1 else 0
+          memory' = storeData memory dest result
+      in (memory', input, output, address + 4)
+    runInstruction (Equals pleft pright dest) = 
+      let left = loadParam memory pleft
+          right = loadParam memory pright
+          result = if left == right then 1 else 0
+          memory' = storeData memory dest result
+      in (memory', input, output, address + 4)
+    runInstruction _ = (memory, input, output, address + 1)
+    
 
-step :: (Memory, Address, Instruction) -> (Memory, Address, Instruction)
-step (memory, address, instruction) = 
-  let result = runInstruction memory instruction
-      nextAddress = address + 4
-      nextInstruction = readInstruction result nextAddress
-  in (result, nextAddress, nextInstruction)
+
+loadParam :: Memory -> Parameter -> Integer
+loadParam _ (PValue val) = val
+loadParam memory (PAddr addr) = readData memory addr
+
+finished :: (Memory, [Integer], [Integer], Address) -> Bool
+finished (memory, _, _, addr) = case readInstruction memory addr of 
+  Stop -> True
+  Error -> True
+  _ -> False
 
 readData :: Memory -> Address -> Integer
-readData memory address = memory ! fromIntegral address
+readData memory address = 
+  let data' = memory ! fromIntegral address
+  in trace ("Read " ++ show data' ++ " from " ++ show address) data'
 
 storeData :: Memory -> Address -> Integer -> Memory
-storeData memory address val = memory // [(fromIntegral address, val)]
+storeData memory address val = 
+  trace ("Wrote " ++ show val ++ " to " ++ show address) $ memory // [(fromIntegral address, val)]
 
 readInstruction :: Memory -> Address -> Instruction
 readInstruction memory address = 
-    let opcode = readData memory address
-    in  readInstruction' opcode
+    let instr = readData memory address
+        (paramModesCode, opcode) = instr `divMod` 100
+        paramModes = snd <$> iterate (\(rest, _) -> rest `divMod` 10) (paramModesCode `divMod` 10)
+        paramVals = (\offset -> readData memory $ address + offset) <$> [1..]
+        params = zipWith param paramModes paramVals
+    in  readInstruction' opcode params
     where 
-      readInstruction' :: Integer -> Instruction
-      readInstruction' 1 = Add (PAddr $readData memory $ address + 1) (PAddr $ readData memory $ address + 2) (PAddr $ readData memory $ address + 3)
-      readInstruction' 2 = Mul (PAddr $readData memory $ address + 1) (PAddr $ readData memory $ address + 2) (PAddr $ readData memory $ address + 3)
-      readInstruction' 3 = Input (PAddr $ readData memory $ address + 1)
-      readInstruction' 4 = Output (PAddr $ readData memory $ address + 1)
-      readInstruction' 99 = Stop
-      readInstruction' _ = Error
-  
-runInstruction :: Memory -> Instruction -> Memory
-runInstruction memory (Add (PAddr left) (PAddr right) (PAddr dest)) = storeData memory dest $ readData memory left + readData memory right
-runInstruction memory (Mul (PAddr left) (PAddr right) (PAddr dest)) = storeData memory dest $ readData memory left * readData memory right
-runInstruction memory _ = memory
-      
-incr :: Instruction -> Address
-incr Add{} = 4
-incr Mul{} = 4
-incr Input{} = 2
-incr Output{} = 2
-incr Stop = 1
-incr Error = 1
+      readInstruction' :: Integer -> [Parameter] -> Instruction
+      readInstruction' 1 (p0 : p1 : PAddr p2 : _) = Add p0 p1 p2 
+      readInstruction' 2 (p0 : p1 : PAddr p2 : _)  = Mul p0 p1 p2 
+      readInstruction' 3 (PAddr p0 : _)   = Input p0
+      readInstruction' 4 (p0 : _) = Output p0
+      readInstruction' 5 (p0 : p1 : _) = JumpIfTrue p0 p1
+      readInstruction' 6 (p0 : p1 : _) = JumpIfFalse p0 p1
+      readInstruction' 7 (p0 : p1 : PAddr p2 : _) = LessThan p0 p1 p2
+      readInstruction' 8 (p0 : p1 : PAddr p2 : _) = Equals p0 p1 p2
+      readInstruction' 99 _ = Stop
+      readInstruction' _ _ = Error
+
+param :: Integer -> Integer -> Parameter
+param 0 address = PAddr address
+param _ value = PValue value
+    
 
     
 
