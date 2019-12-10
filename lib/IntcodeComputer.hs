@@ -29,7 +29,7 @@ runProgram program input  =
 step :: (Memory, [Integer], [Integer], Address) -> (Memory, [Integer], [Integer], Address)
 step (memory, input, output, address) =
   let instruction = readInstruction memory address
-  in runInstruction $ trace (show instruction) instruction
+  in runInstruction {--$ trace (show instruction)--} instruction
   where 
     runInstruction :: Instruction -> (Memory, [Integer], [Integer], Address)
     runInstruction (Add pleft pright dest) = 
@@ -88,11 +88,11 @@ finished (memory, _, _, addr) = case readInstruction memory addr of
 readData :: Memory -> Address -> Integer
 readData memory address = 
   let data' = memory ! fromIntegral address
-  in trace ("Read " ++ show data' ++ " from " ++ show address) data'
+  in {--trace ("Read " ++ show data' ++ " from " ++ show address)--} data'
 
 storeData :: Memory -> Address -> Integer -> Memory
 storeData memory address val = 
-  trace ("Wrote " ++ show val ++ " to " ++ show address) $ memory // [(fromIntegral address, val)]
+  {--trace ("Wrote " ++ show val ++ " to " ++ show address) $--} memory // [(fromIntegral address, val)]
 
 readInstruction :: Memory -> Address -> Instruction
 readInstruction memory address = 

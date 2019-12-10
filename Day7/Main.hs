@@ -21,9 +21,19 @@ main = do
 
 exec :: Memory -> Integer
 exec program = 
-    let perms = permutations [0..4]
-    in maximum $ head . foldl runProgram' [0] <$> perms
-  where runProgram' :: [Integer] -> Integer -> [Integer]
-        runProgram' input phaseSetting  = 
-            let (_, _, output, _) = runProgram program $ phaseSetting : input
+    let perms = permutations [5..9]
+    in maximum $ exec' program <$> perms
+
+exec' :: Memory -> [Integer] -> Integer
+exec' program [phaseA, phaseB, phaseC, phaseD, phaseE] = 
+  let outA = runProgram' $ phaseA : 0 : outE
+      outB = runProgram' $ phaseB : outA
+      outC = runProgram' $ phaseC : outB
+      outD = runProgram' $ phaseD : outC
+      outE = runProgram' $ phaseE : outD
+  in last outE
+  where runProgram' :: [Integer] -> [Integer]
+        runProgram' input  = 
+            let (_, _, output, _) = runProgram program input
             in output
+exec' _ _ = error "Waaaaaah, not enough phases!"
