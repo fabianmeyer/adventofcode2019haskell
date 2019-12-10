@@ -6,7 +6,7 @@ import qualified Data.Text.Read as T
 
 main :: IO ()
 main = do 
-  input <- T.readFile "Day1_input.txt"  
+  input <- T.readFile "Day1/input.txt"  
   let inputLines = T.lines input
   let (Right numbers) = traverse T.decimal inputLines
   let result = sum $ requiredFuel . fst <$> numbers

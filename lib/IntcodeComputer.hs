@@ -1,10 +1,6 @@
-module Main where
+module IntcodeComputer where
 
-import qualified Data.Text.IO as T
-import qualified Data.Text as T
-import qualified Data.Text.Read as T
 import Data.Vector (Vector, (!), (//))
-import qualified Data.Vector as V
 import Debug.Trace
 
 type Address = Integer 
@@ -24,22 +20,11 @@ data Instruction =
   | Stop
   | Error
   deriving (Show)
-  
-main :: IO ()
-main = do 
-  input <- T.readFile "Day5_input.txt"  
-  let segments = T.split (== ',') input
-  case traverse (T.signed T.decimal) segments of 
-    (Right numbers) ->
-      let program = V.fromList $ fst <$> numbers
-          result = runProgram program [5] 
-      in print result
-    (Left err) -> print err
 
-runProgram :: Memory -> [Integer] -> [Integer]
+runProgram :: Memory -> [Integer] -> (Memory, [Integer], [Integer], Address)
 runProgram program input  = 
-  let (_, _, output, _) = until finished step (program, input, [], 0) 
-  in output
+  let result = until finished step (program, input, [], 0) 
+  in result
 
 step :: (Memory, [Integer], [Integer], Address) -> (Memory, [Integer], [Integer], Address)
 step (memory, input, output, address) =

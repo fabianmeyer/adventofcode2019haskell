@@ -6,25 +6,17 @@ import Data.Text (Text)
 import qualified Data.Text.IO as T
 import qualified Data.Text as T
 import qualified Data.Text.Read as T
-import Data.Vector (Vector, (!), (//))
-import qualified Data.Vector as V
-import Data.Set (Set)
 import qualified Data.Set as S
-import Debug.Trace
-import Data.List (sort, sortOn, intersect, elemIndex)
+import Data.List (sort, elemIndex)
 
 data Vec = Vec Integer Integer deriving (Show, Eq)
 deriving instance Ord Vec
 
-instance Num Vec where
-  (+) (Vec ax ay) (Vec bx by) = Vec (ax + bx) $ ay + by
-
-
 main :: IO ()
 main = do 
-  input <- T.readFile "Day3_input.txt"  
-  let [path1, path2] = positions (Vec 0 0) <$> fmap parseVector . T.split (== ',') <$> T.lines input
-  let intersections = filter ((/= Vec 0 0)) . S.toList $ S.intersection (S.fromList path1) (S.fromList path2)
+  input <- T.readFile "Day3/input.txt"  
+  let [path1, path2] = positions (Vec 0 0) . fmap parseVector . T.split (== ',') <$> T.lines input
+  let intersections = filter (/= Vec 0 0) . S.toList $ S.intersection (S.fromList path1) (S.fromList path2)
   let sortedManhattan = sort $ manhattanDist <$> intersections
   let sortedStep = sort $ stepDist path1 path2 <$> intersections
   print $ "Manhattan: " ++ (show . head $ sortedManhattan)
@@ -40,6 +32,10 @@ parseVector direction =
         f 'L' v = Vec (-v) 0
         f 'U' v = Vec 0 v
         f 'D' v = Vec 0 (-v)
+        f _ _ = error ""
+
+add :: Vec -> Vec -> Vec
+add (Vec ax ay) (Vec bx by) = Vec (ax + bx) $ ay + by
 
 manhattanDist :: Vec -> Integer
 manhattanDist (Vec x y) = abs x + abs y
@@ -52,10 +48,10 @@ stepDist a b v =
 
 positions :: Vec -> [Vec] -> [Vec]
 positions start [] = [start]
-positions start (v : rest) = (walk start v) ++ positions (start + v) rest
+positions start (v : rest) = walk start v ++ positions (add start v) rest
 
 walk :: Vec -> Vec -> [Vec]
-walk (Vec sx sy) (Vec vx 0) | vx >= 0 = [Vec (sx + x) sy | x <- [0 .. vx - 1]]
-walk (Vec sx sy) (Vec vx 0) | vx < 0  = [Vec (sx - x) sy | x <- [0 .. (abs vx) - 1]]
-walk (Vec sx sy) (Vec 0 vy) | vy >= 0 = [Vec sx (sy + y) | y <- [0 .. vy - 1]]
-walk (Vec sx sy) (Vec 0 vy) | vy < 0  = [Vec sx (sy - y) | y <- [0 .. (abs vy) - 1]]
+walk (Vec sx sy) (Vec vx 0) | vx < 0  = [Vec (sx - x) sy | x <- [0 .. abs vx - 1]]
+walk (Vec sx sy) (Vec vx 0) = [Vec (sx + x) sy | x <- [0 .. vx - 1]]
+walk (Vec sx sy) (Vec 0 vy) | vy < 0  = [Vec sx (sy - y) | y <- [0 .. abs vy - 1]]
+walk (Vec sx sy) (Vec _ vy) = [Vec sx (sy + y) | y <- [0 .. vy - 1]]

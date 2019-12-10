@@ -12,7 +12,7 @@ import Data.Maybe (maybeToList)
 
 main :: IO ()
 main = do 
-  input <- T.readFile "Day6_input.txt"  
+  input <- T.readFile "Day6/input.txt"  
   let segments = T.lines input
   case traverse parseOrbit segments of 
     (Right numbers) -> 

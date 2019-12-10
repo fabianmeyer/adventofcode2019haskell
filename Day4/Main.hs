@@ -1,15 +1,6 @@
-{-# LANGUAGE StandaloneDeriving #-}
-
 module Main where
 import Data.List (find, zip4)
 import Data.Maybe (isJust, isNothing)
-
-data Vec = Vec Integer Integer deriving (Show, Eq)
-deriving instance Ord Vec
-
-instance Num Vec where
-  (+) (Vec ax ay) (Vec bx by) = Vec (ax + bx) $ ay + by
-
 
 main :: IO ()
 main = do 
