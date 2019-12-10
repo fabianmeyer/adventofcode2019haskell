@@ -6,7 +6,7 @@ import qualified Data.Text.Read as T
 import qualified Data.Vector as V
 import Data.List (permutations)
 
-import IntcodeComputer (Memory, runProgram)
+import IntcodeComputer (Memory, runProgram) 
   
 main :: IO ()
 main = do 

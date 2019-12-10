@@ -3,7 +3,6 @@ let
   inherit (nixpkgs) pkgs;
   inherit (pkgs) haskellPackages;
   all-hies = import (fetchTarball "https://github.com/infinisil/all-hies/tarball/master") {};
-
   project = import ./release.nix;
 in
 pkgs.stdenv.mkDerivation {
@@ -11,6 +10,7 @@ pkgs.stdenv.mkDerivation {
   buildInputs = project.env.nativeBuildInputs ++ [
     haskellPackages.cabal-install
     haskellPackages.hlint
+    haskellPackages.cabal2nix
     haskellPackages.cabal-helper
     (all-hies.bios.selection { selector = p: { inherit (p) ghc865; }; })
     (all-hies.selection { selector = p: { inherit (p) ghc865; }; })

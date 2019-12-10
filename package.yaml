@@ -1,0 +1,46 @@
+name: Advent
+version: 0.1.0.0
+
+dependencies:
+  - base >=4.12 && <4.13
+  - text
+  - vector
+  - containers
+
+ghc-options:
+  - -threaded
+  - -rtsopts
+  - -with-rtsopts=-N
+
+library:
+  source-dirs: lib
+  exposed-modules: IntcodeComputer
+
+executables:
+  Day1:
+    main: Main.hs
+    source-dirs: Day1
+  Day2:
+    main: Main.hs
+    source-dirs: Day2
+    dependencies:
+      - Advent
+  Day3:
+    main: Main.hs
+    source-dirs: Day3
+  Day4:
+    main: Main.hs
+    source-dirs: Day4
+  Day5:
+    main: Main.hs
+    source-dirs: Day5
+    dependencies:
+      - Advent
+  Day6:
+    main: Main.hs
+    source-dirs: Day6
+  Day7:
+    main: Main.hs
+    source-dirs: Day7
+    dependencies:
+      - Advent
