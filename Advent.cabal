@@ -46,3 +46,12 @@ executable Day5
                      , containers
   default-language:    Haskell2010
   ghc-options:         -Wall
+
+executable Day6
+  main-is:             Day6.hs
+  build-depends:       base >=4.12 && <4.13
+                     , text
+                     , vector
+                     , containers
+  default-language:    Haskell2010
+  ghc-options:         -Wall
