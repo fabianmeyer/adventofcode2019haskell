@@ -44,3 +44,6 @@ executables:
     source-dirs: Day7
     dependencies:
       - Advent
+  Day8:
+    main: Main.hs
+    source-dirs: Day8
