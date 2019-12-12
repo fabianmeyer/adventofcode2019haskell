@@ -13,7 +13,7 @@ main = do
   let segments = T.split (== ',') input
   case traverse (T.signed T.decimal) segments of 
     (Right numbers) ->
-      let program = V.fromList . take 1024 $ (fst <$> numbers) ++ repeat 0
-          result = _output $ runProgram program [1]
-      in print result
+      let program = V.fromList . take (1024 * 1024) $ (fst <$> numbers) ++ repeat 0
+          result = runProgram program [2]
+      in print $ _output result
     (Left err) -> print err
